@@ -1,4 +1,4 @@
-# lisovyk
+# Lisovyk
 
 Українською | [English](README.en.md) | [Сайт](https://vovche.github.io/lisovyk/)
 
