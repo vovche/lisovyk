@@ -142,6 +142,66 @@ footer a { margin-right: 1.25rem; }
 </header>
 
 <main>
+  <h2>Що ви отримуєте</h2>
+  <ul class="cards">
+    <li>
+      <h3>Спецсимволи під рукою</h3>
+      <p><span class="symbols">[ ] { } &lt; &gt; ; ' @ # ^ &amp; ` ~</span><br>
+      Правий Alt і та сама клавіша, що в англійській розкладці: пальці вже знають, куди тягнутись.
+      А <kbd>\</kbd> та <kbd>|</kbd> набираються взагалі без модифікаторів.</p>
+    </li>
+    <li>
+      <h3>Код, чати й запити до ШІ — українською</h3>
+      <p><code>`код`</code>, <code>[посилання](…)</code>, <code>@згадки</code>, <code>#канали</code>, блоки
+      в потрійних бектиках і JSON набираються посеред українського речення, без зміни розкладки.</p>
+    </li>
+    <li>
+      <h3>Російські літери без російської розкладки</h3>
+      <p><kbd>э</kbd>, <kbd>ы</kbd>, <kbd>ъ</kbd> — правий Alt і українська літера, що звучить так само:
+      <kbd>е</kbd>, <kbd>и</kbd>, <kbd>ь</kbd>. Цитату, прізвище чи назву можна набрати, не тримаючи в системі
+      третьої розкладки.</p>
+    </li>
+    <li>
+      <h3>Правильний апостроф і наголос</h3>
+      <p>Клавіша ліворуч від <kbd>1</kbd> дає літерний апостроф <kbd>ʼ</kbd>: слово лишається цілим, і подвійне
+      клацання виділяє «пʼять» повністю. На ній же знак наголосу: «за́мок» чи «замо́к».</p>
+    </li>
+    <li>
+      <h3>Нічого не треба вчити заново</h3>
+      <p>Усі українські літери, цифри й розділові знаки — на звичних місцях. Нове зʼявляється лише з правим
+      Alt.</p>
+    </li>
+    <li>
+      <h3>Чисте встановлення</h3>
+      <p>Без root і без змін у системних файлах: усе лежить у вашій теці налаштувань і прибирається однією
+      командою.</p>
+    </li>
+  </ul>
+
+  <h2>Як вона виглядає</h2>
+  <div class="levels">
+    <input type="radio" name="level" id="l1">
+    <input type="radio" name="level" id="l2">
+    <input type="radio" name="level" id="l3" checked>
+    <input type="radio" name="level" id="l4">
+    <div class="tabs">
+      <label for="l1">Без модифікаторів</label>
+      <label for="l2">Shift</label>
+      <label for="l3">Правий Alt</label>
+      <label for="l4">Правий Alt + Shift</label>
+    </div>
+    <div class="shots">
+      <img src="1_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk без модифікаторів">
+      <img src="2_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із Shift">
+      <img src="3_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із правим Alt: спецсимволи на місцях англійської розкладки">
+      <img src="4_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із правим Alt і Shift">
+    </div>
+    <div class="legend">
+      <span class="changed">відрізняється від стандартної української</span>
+      <span class="held">клавіші, які треба тримати</span>
+    </div>
+  </div>
+
   <h2 id="install">Встановлення: два кроки</h2>
 
   <section class="step">
@@ -207,66 +267,6 @@ input type:keyboard {
     <p class="note" style="margin-top:0.9rem">Потрібна сесія Wayland. Перевірено в GNOME на Ubuntu 26.04 та
     Fedora 44.</p>
   </section>
-
-  <h2>Що ви отримуєте</h2>
-  <ul class="cards">
-    <li>
-      <h3>Спецсимволи під рукою</h3>
-      <p><span class="symbols">[ ] { } &lt; &gt; ; ' @ # ^ &amp; ` ~</span><br>
-      Правий Alt і та сама клавіша, що в англійській розкладці: пальці вже знають, куди тягнутись.
-      А <kbd>\</kbd> та <kbd>|</kbd> набираються взагалі без модифікаторів.</p>
-    </li>
-    <li>
-      <h3>Код, чати й запити до ШІ — українською</h3>
-      <p><code>`код`</code>, <code>[посилання](…)</code>, <code>@згадки</code>, <code>#канали</code>, блоки
-      в потрійних бектиках і JSON набираються посеред українського речення, без зміни розкладки.</p>
-    </li>
-    <li>
-      <h3>Російські літери без російської розкладки</h3>
-      <p><kbd>э</kbd>, <kbd>ы</kbd>, <kbd>ъ</kbd> — правий Alt і українська літера, що звучить так само:
-      <kbd>е</kbd>, <kbd>и</kbd>, <kbd>ь</kbd>. Цитату, прізвище чи назву можна набрати, не тримаючи в системі
-      третьої розкладки.</p>
-    </li>
-    <li>
-      <h3>Правильний апостроф і наголос</h3>
-      <p>Клавіша ліворуч від <kbd>1</kbd> дає літерний апостроф <kbd>ʼ</kbd>: слово лишається цілим, і подвійне
-      клацання виділяє «пʼять» повністю. На ній же знак наголосу: «за́мок» чи «замо́к».</p>
-    </li>
-    <li>
-      <h3>Нічого не треба вчити заново</h3>
-      <p>Усі українські літери, цифри й розділові знаки — на звичних місцях. Нове зʼявляється лише з правим
-      Alt.</p>
-    </li>
-    <li>
-      <h3>Чисте встановлення</h3>
-      <p>Без root і без змін у системних файлах: усе лежить у вашій теці налаштувань і прибирається однією
-      командою.</p>
-    </li>
-  </ul>
-
-  <h2>Як вона виглядає</h2>
-  <div class="levels">
-    <input type="radio" name="level" id="l1">
-    <input type="radio" name="level" id="l2">
-    <input type="radio" name="level" id="l3" checked>
-    <input type="radio" name="level" id="l4">
-    <div class="tabs">
-      <label for="l1">Без модифікаторів</label>
-      <label for="l2">Shift</label>
-      <label for="l3">Правий Alt</label>
-      <label for="l4">Правий Alt + Shift</label>
-    </div>
-    <div class="shots">
-      <img src="1_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk без модифікаторів">
-      <img src="2_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із Shift">
-      <img src="3_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із правим Alt: спецсимволи на місцях англійської розкладки">
-      <img src="4_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із правим Alt і Shift">
-    </div>
-    <div class="legend">
-      <span class="changed">відрізняється від стандартної української</span>
-      <span class="held">клавіші, які треба тримати</span>
-    </div>
-  </div>
 
   <h2>Видалення</h2>
   <div class="command">
