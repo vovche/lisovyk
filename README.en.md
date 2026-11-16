@@ -67,15 +67,23 @@ is built by `tools/build_site.sh` and published together with the
 Running `./install.sh` again updates layouts that are already installed, so after editing `keys.xkb`
 just run it once more.
 
-After installing, log out and back in, then enable the layout. In GNOME:
+The script only installs the layout; enabling it in your environment is a separate step. It does not
+change your input sources, and the stock Ukrainian layout stays available next to Lisovyk.
+
+In GNOME:
+
+1. Log out and back in: GNOME reads the list of layouts only at login.
+2. Open Settings → Keyboard, press "Add Input Source" under "Input Sources" and choose "Ukrainian
+   (Lisovyk)".
+
+The same from a terminal (this command replaces the whole list of input sources, so put all your
+layouts into it):
 
 ```bash
 gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'ua+lisovyk')]"
 ```
 
-This command replaces the whole list of input sources. If you have other layouts, add "Ukrainian
-(Lisovyk)" through Settings → Keyboard → Input Sources instead. `install.sh` prints the exact
-`gsettings` command for whatever it just installed.
+Uninstalling also removes the layout from GNOME's input sources.
 
 Other environments enable the layout through their own configuration:
 
@@ -115,7 +123,7 @@ Tested in practice:
 | System | Environment | Versions |
 | --- | --- | --- |
 | Ubuntu 26.04 | GNOME 50 (Wayland) | libxkbcommon 1.13.1, xkeyboard-config 2.46 |
-| Fedora 44 | GNOME (Wayland) | — |
+| Fedora 44 | GNOME (Wayland) | tested with version 1.0 of the installer |
 
 The rest of this table is expected behaviour, derived from how these environments work; the layout
 has not been run on them.
