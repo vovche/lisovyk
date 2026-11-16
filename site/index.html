@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lisovyk — українська розкладка для Linux</title>
+<meta name="description" content="Українська розкладка клавіатури для Linux: спецсимволи без перемикання на англійську, правильний апостроф однією клавішею. Встановлюється однією командою, без root.">
+<meta property="og:title" content="Lisovyk — українська розкладка для Linux">
+<meta property="og:description" content="Спецсимволи без перемикання на англійську, правильний апостроф однією клавішею. Встановлюється однією командою, без root.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vovche.github.io/lisovyk/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e95420'/%3E%3Ctext x='16' y='23' font-size='20' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='white'%3Eї%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #faf8f5;
+  --surface: #ffffff;
+  --text: #1f1d1b;
+  --muted: #5f5a55;
+  --line: #e4dfd8;
+  --accent: #c7410f;
+  --accent-soft: #fbe9e1;
+  --code-bg: #2b2b2b;
+  --code-text: #f4f1ee;
+  --key: #f0ece6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1a19;
+    --surface: #252423;
+    --text: #f1eeea;
+    --muted: #aaa39b;
+    --line: #3a3836;
+    --accent: #ff7a45;
+    --accent-soft: #3a261d;
+    --code-bg: #111110;
+    --code-text: #f4f1ee;
+    --key: #353331;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.55 system-ui, -apple-system, "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+}
+main, header, footer { max-width: 60rem; margin: 0 auto; padding: 0 1.25rem; }
+header { padding-top: 4rem; padding-bottom: 1rem; }
+h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); line-height: 1.1; margin: 0 0 1rem; letter-spacing: -0.02em; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--accent); }
+h2 { font-size: 1.5rem; margin: 3.5rem 0 1rem; letter-spacing: -0.01em; }
+p { margin: 0 0 1rem; }
+.lead { font-size: 1.2rem; color: var(--muted); max-width: 40rem; }
+a { color: var(--accent); }
+kbd, code {
+  font: 0.92em ui-monospace, "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+}
+kbd {
+  display: inline-block; padding: 0.05em 0.45em; border-radius: 0.35em;
+  background: var(--key); border: 1px solid var(--line); border-bottom-width: 2px; white-space: nowrap;
+}
+.command {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: 0.75rem; padding: 0.9rem 1rem; margin: 1.5rem 0 0.6rem;
+}
+.command code { flex: 1; overflow-x: auto; white-space: nowrap; font-size: 0.95rem; padding: 0.15rem 0; }
+.command button {
+  flex: none; font: inherit; font-size: 0.85rem; cursor: pointer;
+  color: var(--code-text); background: #ffffff1f; border: 0; border-radius: 0.5rem; padding: 0.4rem 0.8rem;
+}
+.command button:hover { background: #ffffff33; }
+.note { font-size: 0.92rem; color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; padding: 0; margin: 0; list-style: none; }
+.cards li { background: var(--surface); border: 1px solid var(--line); border-radius: 0.9rem; padding: 1.2rem 1.25rem; }
+.cards h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
+.cards p { margin: 0; color: var(--muted); font-size: 0.97rem; }
+.symbols { font-family: ui-monospace, "DejaVu Sans Mono", Menlo, Consolas, monospace; color: var(--accent); letter-spacing: 0.12em; }
+.levels { margin-top: 1rem; }
+.levels input { position: absolute; opacity: 0; pointer-events: none; }
+.tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.tabs label {
+  cursor: pointer; padding: 0.45rem 0.95rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); font-size: 0.95rem;
+}
+.levels img { display: none; width: 100%; height: auto; border-radius: 1rem; }
+#l1:checked ~ .tabs label[for=l1], #l2:checked ~ .tabs label[for=l2],
+#l3:checked ~ .tabs label[for=l3], #l4:checked ~ .tabs label[for=l4] {
+  background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600;
+}
+#l1:focus-visible ~ .tabs label[for=l1], #l2:focus-visible ~ .tabs label[for=l2],
+#l3:focus-visible ~ .tabs label[for=l3], #l4:focus-visible ~ .tabs label[for=l4] { outline: 2px solid var(--accent); outline-offset: 2px; }
+#l1:checked ~ .shots img:nth-child(1), #l2:checked ~ .shots img:nth-child(2),
+#l3:checked ~ .shots img:nth-child(3), #l4:checked ~ .shots img:nth-child(4) { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem; margin-top: 0.8rem; font-size: 0.92rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; border-radius: 0.25em; margin-right: 0.45em; vertical-align: -0.08em; }
+.legend .changed::before { background: #e95420; }
+.legend .held::before { background: #7a7a7a; }
+ol.steps { padding-left: 1.3rem; margin: 0; }
+ol.steps li { margin-bottom: 0.6rem; }
+footer { margin-top: 4rem; padding-top: 1.5rem; padding-bottom: 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; }
+footer a { margin-right: 1.25rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Lisovyk — українська розкладка, з якою <em>не треба перемикатися</em> на англійську</h1>
+  <p class="lead">Дужки, лапки, <kbd>@</kbd>, <kbd>#</kbd>, бектик і решта спецсимволів — просто з української
+  розкладки. Для Linux, без root-прав, однією командою.</p>
+
+  <div class="command">
+    <code id="install-command">curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash</code>
+    <button type="button" data-copy="install-command">Копіювати</button>
+  </div>
+  <p class="note">Спершу хочете подивитися, що всередині? <a href="install.sh">Відкрийте скрипт</a> або
+  <a href="https://github.com/vovche/lisovyk">код на GitHub</a>.</p>
+</header>
+
+<main>
+  <h2>Що ви отримуєте</h2>
+  <ul class="cards">
+    <li>
+      <h3>Спецсимволи під рукою</h3>
+      <p><span class="symbols">[ ] { } &lt; &gt; ; ' @ # ^ &amp; ` ~</span><br>
+      Правий Alt і та сама клавіша, що в англійській розкладці: пальці вже знають, куди тягнутись.
+      А <kbd>\</kbd> та <kbd>|</kbd> набираються взагалі без модифікаторів.</p>
+    </li>
+    <li>
+      <h3>Код, чати й запити до ШІ — українською</h3>
+      <p><code>`код`</code>, <code>[посилання](…)</code>, <code>@згадки</code>, <code>#канали</code>, блоки
+      в потрійних бектиках і JSON набираються посеред українського речення, без зміни розкладки.</p>
+    </li>
+    <li>
+      <h3>Правильний апостроф однією клавішею</h3>
+      <p>Клавіша ліворуч від <kbd>1</kbd> дає літерний апостроф <kbd>ʼ</kbd>: слово лишається цілим, подвійне
+      клацання виділяє «пʼять» повністю, і він не плутається з лапками в коді.</p>
+    </li>
+    <li>
+      <h3>Наголос там, де він потрібен</h3>
+      <p>«За́мок» чи «замо́к»? Знак наголосу ставиться після голосної одним сполученням клавіш.</p>
+    </li>
+    <li>
+      <h3>Нічого не треба вчити заново</h3>
+      <p>Усі українські літери, цифри й розділові знаки — на звичних місцях. Нове зʼявляється лише з правим
+      Alt.</p>
+    </li>
+    <li>
+      <h3>Чисте встановлення</h3>
+      <p>Без root і без змін у системних файлах: усе лежить у вашій теці налаштувань і прибирається однією
+      командою.</p>
+    </li>
+  </ul>
+
+  <h2>Як вона виглядає</h2>
+  <div class="levels">
+    <input type="radio" name="level" id="l1">
+    <input type="radio" name="level" id="l2">
+    <input type="radio" name="level" id="l3" checked>
+    <input type="radio" name="level" id="l4">
+    <div class="tabs">
+      <label for="l1">Без модифікаторів</label>
+      <label for="l2">Shift</label>
+      <label for="l3">Правий Alt</label>
+      <label for="l4">Правий Alt + Shift</label>
+    </div>
+    <div class="shots">
+      <img src="1_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk без модифікаторів">
+      <img src="2_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із Shift">
+      <img src="3_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із правим Alt: спецсимволи на місцях англійської розкладки">
+      <img src="4_lisovyk.svg" width="942" height="394" alt="Розкладка Lisovyk із правим Alt і Shift">
+    </div>
+    <div class="legend">
+      <span class="changed">відрізняється від стандартної української</span>
+      <span class="held">клавіші, які треба тримати</span>
+    </div>
+  </div>
+
+  <h2>Як увімкнути</h2>
+  <ol class="steps">
+    <li>Виконайте команду встановлення.</li>
+    <li>Вийдіть із сесії та увійдіть знову.</li>
+    <li>У GNOME відкрийте «Параметри → Клавіатура → Джерела вводу» й додайте «Ukrainian (Lisovyk)».
+      Для Hyprland, niri та Sway рядки конфігурації є в
+      <a href="https://github.com/vovche/lisovyk#встановлення">інструкції</a>.</li>
+  </ol>
+  <p class="note" style="margin-top:1rem">Потрібна сесія Wayland. Перевірено в GNOME на Ubuntu 26.04 та Fedora 44.</p>
+
+  <h2>Видалення</h2>
+  <div class="command">
+    <code id="uninstall-command">curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash -s -- --uninstall</code>
+    <button type="button" data-copy="uninstall-command">Копіювати</button>
+  </div>
+</main>
+
+<footer>
+  <a href="https://github.com/vovche/lisovyk">GitHub</a>
+  <a href="https://github.com/vovche/lisovyk/blob/main/layouts/lisovyk/README.md">Чому розкладка саме така</a>
+  <a href="https://github.com/vovche/lisovyk/blob/main/LICENSE">Ліцензія MIT</a>
+</footer>
+
+<script>
+document.querySelectorAll("button[data-copy]").forEach(function (button) {
+  if (!navigator.clipboard) { button.hidden = true; return; }
+  button.addEventListener("click", function () {
+    var text = document.getElementById(button.dataset.copy).textContent;
+    navigator.clipboard.writeText(text).then(function () {
+      var old = button.textContent;
+      button.textContent = "Скопійовано";
+      setTimeout(function () { button.textContent = old; }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>
