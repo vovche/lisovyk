@@ -11,7 +11,9 @@
     // 4. Для <AB07> на 3,4 рівні поставити ъЪ
     key <AB07> { [ Cyrillic_softsign, Cyrillic_SOFTSIGN, Cyrillic_hardsign, Cyrillic_HARDSIGN ] };
 
-    // 5. З <AC02> ыЫ перемістити на відповідні місця <AB05>
+    // 5. ыЫ на 3,4 рівні доступні на двох клавішах: на <AB05> (літера И) їх додано тут,
+    //    а на <AC02> (літера І) вони успадковані від базової розкладки, бо рядок
+    //    із двома рівнями не скасовує 3,4 рівні бази.
     key <AC02> { [ Ukrainian_i, Ukrainian_I ] };
     key <AB05> { [ Cyrillic_i, Cyrillic_I, Cyrillic_yeru, Cyrillic_YERU ] };
 
