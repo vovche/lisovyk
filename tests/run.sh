@@ -5,6 +5,7 @@
 #
 #   tests/run.sh            — запустити всі тести
 #   tests/run.sh назва ...  — запустити лише вказані (назви без префікса test_)
+#   SKIP_TESTS="назва ..."  — змінна оточення: ці тести пропустити
 #
 # Потрібні: bash, python3, libxkbcommon та libxkbregistry (версії 1.0.0+),
 # системні дані xkeyboard-config. shellcheck — за наявності.
@@ -96,6 +97,7 @@ test_syntax() {
     check "tests/run.sh має коректний синтаксис bash" bash -n "$TESTS_DIR/run.sh"
     if command -v shellcheck > /dev/null 2>&1; then
         check "shellcheck не має зауважень до install.sh" shellcheck -x -e SC1090 "$REPO_DIR/install.sh"
+        check "shellcheck не має зауважень до tools/build_site.sh" shellcheck "$REPO_DIR/tools/build_site.sh"
     else
         echo "    ПРОПУЩЕНО: shellcheck не встановлено"
     fi
@@ -381,11 +383,39 @@ test_illustrations() {
     done
 }
 
+# Самодостатній інсталятор із сайту: запуск через канал, як із curl.
+test_standalone() {
+    local out="$WORK/standalone/site" home size
+    home="$(new_home standalone)"
+
+    check "tools/build_site.sh завершується успішно" bash "$REPO_DIR/tools/build_site.sh" "$out"
+    check "зібрано index.html" test -f "$out/index.html"
+    check "зібрано ілюстрації" test -f "$out/3_lisovyk.svg"
+    [ -f "$out/install.sh" ] || { fail "зібрано install.sh"; return; }
+
+    check "встановлення через канал завершується успішно" sh -c "HOME='$home' bash < '$out/install.sh'"
+    check "розкладка працює" xkb "$home" keys ua lisovyk "$REPO_DIR/layouts/lisovyk/keys.xkb"
+    check "варіант є в реєстрі" xkb "$home" registry ua lisovyk "Ukrainian (Lisovyk)"
+    check "видалення через канал завершується успішно" \
+        sh -c "HOME='$home' bash -s -- --uninstall < '$out/install.sh'"
+    check_not "після видалення ~/.config/xkb не лишається" test -e "$home/.config/xkb"
+
+    # Обірване завантаження не має нічого встановити.
+    home="$(new_home standalone-truncated)"
+    size="$(wc -c < "$out/install.sh")"
+    head -c "$((size / 2))" "$out/install.sh" > "$WORK/standalone/half.sh"
+    HOME="$home" bash < "$WORK/standalone/half.sh" > /dev/null 2>&1
+    check_not "половина скрипта нічого не встановлює" test -e "$home/.config"
+    head -c "$((size - 20))" "$out/install.sh" > "$WORK/standalone/almost.sh"
+    HOME="$home" bash < "$WORK/standalone/almost.sh" > /dev/null 2>&1
+    check_not "скрипт без останнього рядка нічого не встановлює" test -e "$home/.config"
+}
+
 # ---------------------------------------------------------------------------
 
 ALL_TESTS=(
     syntax layout_data arguments fresh_install idempotent uninstall_clean uninstall_nothing
-    update preserves_foreign legacy_migration xdg_config_home multiple_layouts illustrations
+    update preserves_foreign legacy_migration xdg_config_home multiple_layouts illustrations standalone
 )
 
 if [ $# -gt 0 ]; then
@@ -396,6 +426,9 @@ fi
 
 FAILED_TESTS=()
 for name in "${SELECTED[@]}"; do
+    case " ${SKIP_TESTS-} " in
+        *" $name "*) echo "== $name: пропущено (SKIP_TESTS)"; continue ;;
+    esac
     if ! declare -F "test_$name" > /dev/null; then
         echo "Невідомий тест: $name (є: ${ALL_TESTS[*]})" >&2
         exit 2
