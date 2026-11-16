@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lisovyk — українська розкладка для Linux</title>
-<meta name="description" content="Українська розкладка клавіатури для Linux: спецсимволи та російські літери без перемикання на іншу розкладку, правильний апостроф однією клавішею. Встановлюється однією командою, без root.">
+<meta name="description" content="Українська розкладка клавіатури для Linux: спецсимволи та російські літери без перемикання на іншу розкладку, правильний апостроф однією клавішею. Встановлюється за два кроки, без root.">
 <meta property="og:title" content="Lisovyk — українська розкладка для Linux">
-<meta property="og:description" content="Спецсимволи та російські літери без перемикання на іншу розкладку, правильний апостроф однією клавішею. Встановлюється однією командою, без root.">
+<meta property="og:description" content="Спецсимволи та російські літери без перемикання на іншу розкладку, правильний апостроф однією клавішею. Встановлюється за два кроки, без root.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://vovche.github.io/lisovyk/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e95420'/%3E%3Ctext x='16' y='23' font-size='20' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='white'%3Eї%3C/text%3E%3C/svg%3E">
@@ -97,8 +97,37 @@ kbd {
 .legend span::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; border-radius: 0.25em; margin-right: 0.45em; vertical-align: -0.08em; }
 .legend .changed::before { background: #e95420; }
 .legend .held::before { background: #7a7a7a; }
-ol.steps { padding-left: 1.3rem; margin: 0; }
-ol.steps li { margin-bottom: 0.6rem; }
+.cta {
+  display: inline-block; margin-top: 0.75rem; padding: 0.7rem 1.3rem; border-radius: 0.7rem;
+  background: var(--accent); color: #fff; font-weight: 600; text-decoration: none;
+}
+@media (prefers-color-scheme: dark) { .cta { color: #1b1a19; } }
+.step {
+  position: relative; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 0.9rem; padding: 1.3rem 1.25rem 1.3rem 4.4rem; margin-bottom: 1rem;
+}
+.step-number {
+  position: absolute; left: 1.2rem; top: 1.2rem; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 1.15rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.step h3 { margin: 0.25rem 0 0.6rem; font-size: 1.2rem; }
+.step h4 { margin: 1.2rem 0 0.5rem; font-size: 1rem; }
+.step .command { margin-top: 0.9rem; }
+.step ol { padding-left: 1.3rem; margin: 0; }
+.step ol li { margin-bottom: 0.55rem; }
+.step ol li:last-child { margin-bottom: 0; }
+details { border-top: 1px solid var(--line); padding: 0.7rem 0; }
+details:last-of-type { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; font-weight: 600; }
+pre {
+  margin: 0.7rem 0 0.2rem; padding: 0.8rem 1rem; border-radius: 0.6rem; overflow-x: auto;
+  background: var(--code-bg); color: var(--code-text); font-size: 0.9rem; line-height: 1.45;
+}
+@media (max-width: 34rem) {
+  .step { padding: 1.1rem 1rem; }
+  .step-number { position: static; margin-bottom: 0.5rem; }
+}
 footer { margin-top: 4rem; padding-top: 1.5rem; padding-bottom: 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; }
 footer a { margin-right: 1.25rem; }
 </style>
@@ -108,17 +137,77 @@ footer a { margin-right: 1.25rem; }
 <header>
   <h1>Lisovyk — українська розкладка, з якою <em>не треба перемикатися</em> ні на англійську, ні на російську</h1>
   <p class="lead">Дужки, лапки, <kbd>@</kbd>, <kbd>#</kbd>, бектик і решта спецсимволів, а також російські <kbd>э</kbd>, <kbd>ы</kbd>, <kbd>ъ</kbd> — просто
-  з української розкладки. Для Linux, без root-прав, однією командою.</p>
-
-  <div class="command">
-    <code id="install-command">curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash</code>
-    <button type="button" data-copy="install-command">Копіювати</button>
-  </div>
-  <p class="note">Спершу хочете подивитися, що всередині? <a href="install.sh">Відкрийте скрипт</a> або
-  <a href="https://github.com/vovche/lisovyk">код на GitHub</a>.</p>
+  з української розкладки. Для Linux, без root-прав, за два кроки.</p>
+  <a class="cta" href="#install">Встановити за два кроки ↓</a>
 </header>
 
 <main>
+  <h2 id="install">Встановлення: два кроки</h2>
+
+  <section class="step">
+    <span class="step-number">1</span>
+    <h3>Виконайте скрипт</h3>
+    <p>Він додає розкладку у вашу теку налаштувань. Root-права не потрібні, системні файли не змінюються.</p>
+    <div class="command">
+      <code id="install-command">curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash</code>
+      <button type="button" data-copy="install-command">Копіювати</button>
+    </div>
+    <p class="note">Спершу хочете подивитися, що всередині? <a href="install.sh">Відкрийте скрипт</a> або
+    <a href="https://github.com/vovche/lisovyk">код на GitHub</a>.</p>
+  </section>
+
+  <section class="step">
+    <span class="step-number">2</span>
+    <h3>Увімкніть розкладку у своєму середовищі</h3>
+    <p>Скрипт лише встановлює розкладку. Ваші джерела введення він не чіпає, тож додати Lisovyk до них
+    треба самостійно.</p>
+
+    <h4>GNOME</h4>
+    <ol>
+      <li><strong>Вийдіть із сесії та увійдіть знову.</strong> GNOME читає перелік розкладок лише під час
+        входу, тому без цього Lisovyk у списку не зʼявиться.</li>
+      <li>Відкрийте <strong>«Параметри»</strong> і перейдіть у розділ <strong>«Клавіатура»</strong>.</li>
+      <li>У блоці <strong>«Джерела введення»</strong> натисніть <strong>«Додати джерело введення»</strong>.</li>
+      <li>Введіть у пошуку <kbd>Lisovyk</kbd>, виберіть <strong>«Ukrainian (Lisovyk)»</strong> і натисніть
+        <strong>«Додати»</strong>.</li>
+      <li>Перемикайте розкладки клавішами <kbd>Super</kbd> + <kbd>Пробіл</kbd> або значком у верхній панелі.</li>
+    </ol>
+    <p class="note" style="margin-top:0.9rem">Стандартна «Українська» нікуди не зникає: можна тримати обидві
+    розкладки й перемикатися між ними.</p>
+
+    <h4>Інші середовища</h4>
+    <details>
+      <summary>Hyprland</summary>
+      <pre><code># ~/.config/hypr/hyprland.conf
+input {
+    kb_layout = us,ua
+    kb_variant = ,lisovyk
+}</code></pre>
+    </details>
+    <details>
+      <summary>niri</summary>
+      <pre><code>// ~/.config/niri/config.kdl
+input {
+    keyboard {
+        xkb {
+            layout "us,ua"
+            variant ",lisovyk"
+        }
+    }
+}</code></pre>
+    </details>
+    <details>
+      <summary>Sway</summary>
+      <pre><code># ~/.config/sway/config
+input type:keyboard {
+    xkb_layout us,ua
+    xkb_variant ,lisovyk
+}</code></pre>
+    </details>
+    <p class="note" style="margin-top:0.9rem">Потрібна сесія Wayland. Перевірено в GNOME на Ubuntu 26.04 та
+    Fedora 44.</p>
+  </section>
+
   <h2>Що ви отримуєте</h2>
   <ul class="cards">
     <li>
@@ -178,16 +267,6 @@ footer a { margin-right: 1.25rem; }
       <span class="held">клавіші, які треба тримати</span>
     </div>
   </div>
-
-  <h2>Як увімкнути</h2>
-  <ol class="steps">
-    <li>Виконайте команду встановлення.</li>
-    <li>Вийдіть із сесії та увійдіть знову.</li>
-    <li>У GNOME відкрийте «Параметри → Клавіатура → Джерела вводу» й додайте «Ukrainian (Lisovyk)».
-      Для Hyprland, niri та Sway рядки конфігурації є в
-      <a href="https://github.com/vovche/lisovyk#встановлення">інструкції</a>.</li>
-  </ol>
-  <p class="note" style="margin-top:1rem">Потрібна сесія Wayland. Перевірено в GNOME на Ubuntu 26.04 та Fedora 44.</p>
 
   <h2>Видалення</h2>
   <div class="command">
