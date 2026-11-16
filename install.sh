@@ -292,10 +292,30 @@ if [ "$UNINSTALL" -eq 0 ]; then
     mkdir -p "$XKB_DIR/symbols" "$XKB_DIR/rules" || exit 1
 fi
 
-ACTIVE_SOURCES=""
-if command -v gsettings > /dev/null 2>&1; then
-    ACTIVE_SOURCES="$(gsettings get org.gnome.desktop.input-sources sources 2> /dev/null)"
-fi
+# Прибирає розкладку зі списків джерел вводу GNOME (sources і mru-sources).
+# Без цього після видалення в «Параметрах» лишається запис на кшталт
+# «ua+lisovyk», за яким уже немає розкладки. Повертає 0, якщо запису не було
+# або його вдалося прибрати.
+remove_gnome_source() {
+    local id="$1" schema="org.gnome.desktop.input-sources" key current updated status=0
+
+    command -v gsettings > /dev/null 2>&1 || return 0
+    for key in sources mru-sources; do
+        current="$(gsettings get "$schema" "$key" 2> /dev/null)" || continue
+        case "$current" in
+            *"('xkb', '$id')"*) ;;
+            *) continue ;;
+        esac
+        updated="$(printf '%s' "$current" | sed -e "s/('xkb', '$id'), //" -e "s/, ('xkb', '$id')//" -e "s/('xkb', '$id')//")"
+        [ "$updated" = "[]" ] && updated="@a(ss) []"
+        if gsettings set "$schema" "$key" "$updated" 2> /dev/null; then
+            [ "$key" = sources ] && echo "Прибрано '$id' із джерел вводу GNOME."
+        else
+            status=1
+        fi
+    done
+    return "$status"
+}
 
 INSTALLED_SOURCES=()
 STILL_ACTIVE=()
@@ -343,9 +363,7 @@ for layout_dir in "$LAYOUTS_DIR"/*/; do
         uninstall_symbols "$BASE_LAYOUT" "$VARIANT"
         cleanup_legacy_rules "$BASE_LAYOUT" "$VARIANT"
         uninstall_registry "$BASE_LAYOUT" "$VARIANT"
-        case "$ACTIVE_SOURCES" in
-            *"'$BASE_LAYOUT+$VARIANT'"*) STILL_ACTIVE+=("$BASE_LAYOUT+$VARIANT") ;;
-        esac
+        remove_gnome_source "$BASE_LAYOUT+$VARIANT" || STILL_ACTIVE+=("$BASE_LAYOUT+$VARIANT")
     else
         echo "=== Встановлення розкладки: $DESCRIPTION ($BASE_LAYOUT+$VARIANT) ==="
         if ! system_symbols_file "$BASE_LAYOUT" > /dev/null; then
@@ -376,7 +394,7 @@ echo "--------------------------------------------------------"
 if [ "$UNINSTALL" -eq 1 ]; then
     echo "Видалення завершено."
     if [ ${#STILL_ACTIVE[@]} -gt 0 ]; then
-        echo "Увага: ці розкладки досі є серед джерел вводу GNOME: ${STILL_ACTIVE[*]}"
+        echo "Увага: не вдалося прибрати ці розкладки з джерел вводу GNOME: ${STILL_ACTIVE[*]}"
         echo "Приберіть їх у «Параметри → Клавіатура → Джерела вводу»."
     fi
     echo "Зміни набудуть чинності після виходу із сесії та повторного входу."

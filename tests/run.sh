@@ -22,6 +22,23 @@ unset XDG_CONFIG_HOME XDG_SESSION_TYPE XKB_CONFIG_ROOT XKB_CONFIG_EXTRA_PATH
 unset XKB_DEFAULT_RULES XKB_DEFAULT_MODEL XKB_DEFAULT_LAYOUT XKB_DEFAULT_VARIANT XKB_DEFAULT_OPTIONS
 export LC_ALL=C.UTF-8
 
+# Справжній gsettings змінює налаштування GNOME поточного користувача незалежно
+# від HOME, тому тести підставляють замість нього заглушку, що зберігає
+# значення у файлах $GSETTINGS_STUB_DIR.
+export GSETTINGS_STUB_DIR="$WORK/gsettings"
+mkdir -p "$GSETTINGS_STUB_DIR" "$WORK/bin"
+cat > "$WORK/bin/gsettings" << 'STUB'
+#!/bin/bash
+file="$GSETTINGS_STUB_DIR/$2.$3"
+case "$1" in
+    get) cat "$file" 2> /dev/null || echo "@a(ss) []" ;;
+    set) printf '%s\n' "$4" > "$file" ;;
+    *) exit 1 ;;
+esac
+STUB
+chmod +x "$WORK/bin/gsettings"
+export PATH="$WORK/bin:$PATH"
+
 FAILED_CHECKS=0
 
 fail() {
@@ -383,6 +400,36 @@ test_illustrations() {
     done
 }
 
+# Видалення має прибрати розкладку і зі списків джерел вводу GNOME.
+test_gnome_sources() {
+    local home schema="org.gnome.desktop.input-sources"
+    home="$(new_home gnome)"
+    install "$home" > /dev/null 2>&1
+
+    gsettings set "$schema" sources "[('xkb', 'us'), ('xkb', 'ua+lisovyk'), ('xkb', 'de+lisovyk'), ('xkb', 'ua+lisovyk2')]"
+    gsettings set "$schema" mru-sources "[('xkb', 'ua+lisovyk'), ('xkb', 'us')]"
+    install "$home" > /dev/null 2>&1
+    check "встановлення не змінює джерела вводу" \
+        test "$(gsettings get "$schema" mru-sources)" = "[('xkb', 'ua+lisovyk'), ('xkb', 'us')]"
+    install "$home" --uninstall > /dev/null 2>&1
+    check "з sources прибрано лише нашу розкладку" \
+        test "$(gsettings get "$schema" sources)" = "[('xkb', 'us'), ('xkb', 'de+lisovyk'), ('xkb', 'ua+lisovyk2')]"
+    check "з mru-sources прибрано нашу розкладку" \
+        test "$(gsettings get "$schema" mru-sources)" = "[('xkb', 'us')]"
+
+    gsettings set "$schema" sources "[('xkb', 'us'), ('xkb', 'ua+lisovyk')]"
+    install "$home" --uninstall > /dev/null 2>&1
+    check "розкладку прибрано з кінця списку" test "$(gsettings get "$schema" sources)" = "[('xkb', 'us')]"
+
+    gsettings set "$schema" sources "[('xkb', 'ua+lisovyk')]"
+    install "$home" --uninstall > /dev/null 2>&1
+    check "єдину розкладку прибрано, список порожній" test "$(gsettings get "$schema" sources)" = "@a(ss) []"
+
+    gsettings set "$schema" sources "[('xkb', 'us'), ('xkb', 'ua')]"
+    install "$home" --uninstall > /dev/null 2>&1
+    check "чужі джерела вводу не змінено" test "$(gsettings get "$schema" sources)" = "[('xkb', 'us'), ('xkb', 'ua')]"
+}
+
 # Самодостатній інсталятор із сайту: запуск через канал, як із curl.
 test_standalone() {
     local out="$WORK/standalone/site" home size
@@ -415,7 +462,7 @@ test_standalone() {
 
 ALL_TESTS=(
     syntax layout_data arguments fresh_install idempotent uninstall_clean uninstall_nothing
-    update preserves_foreign legacy_migration xdg_config_home multiple_layouts illustrations standalone
+    update preserves_foreign legacy_migration xdg_config_home multiple_layouts gnome_sources illustrations standalone
 )
 
 if [ $# -gt 0 ]; then

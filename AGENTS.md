@@ -45,7 +45,8 @@ the committed SVGs are stale. That test compares against the system's base layou
 
 Run `tests/run.sh` after every change to `install.sh` or to anything under `layouts/`. The tests run
 `install.sh` with `HOME` pointed at a temporary directory, so they never touch the real
-`~/.config/xkb`. `tests/xkbcheck.py` checks the result through `libxkbcommon` (the keymap compiles and
+`~/.config/xkb`, and put a stub `gsettings` first in `PATH`, because the real one changes the current
+user's GNOME settings regardless of `HOME`. `tests/xkbcheck.py` checks the result through `libxkbcommon` (the keymap compiles and
 every key in `keys.xkb` yields the listed keysyms) and `libxkbregistry` (the variant is discoverable
 with the right description). They need `python3`, `libxkbcommon` and `libxkbregistry`; `shellcheck`
 runs when installed. A test that cannot load a library reports it as skipped rather than failed.
@@ -103,7 +104,9 @@ is removed and written again, so re-running after editing `keys.xkb` applies the
 twice changes nothing. Content that isn't ours (the user's own variants, other layouts' registry
 entries, a user's `rules/evdev`) is left byte-for-byte intact.
 
-`--uninstall` reverses both writes, then deletes what it left empty: a `symbols/` file with nothing
+`--uninstall` reverses both writes, removes the layout from GNOME's input source lists (`sources` and
+`mru-sources` in `org.gnome.desktop.input-sources`, via `gsettings` when present — otherwise Settings
+keeps showing a dangling `ua+lisovyk` entry), then deletes what it left empty: a `symbols/` file with nothing
 but whitespace, a `<layout>` entry with no variants and no description, a registry file equal to the
 bare skeleton, and the `symbols/`, `rules/` and `xkb/` directories if empty.
 
