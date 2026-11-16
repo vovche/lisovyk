@@ -1,6 +1,6 @@
 # lisovyk
 
-[Українською](README.md) | English
+[Українською](README.md) | English | [Website](https://vovche.github.io/lisovyk/)
 
 Custom keyboard layout variants for Linux, installed without root privileges. The repository is
 split into a generic installer, `install.sh`, and per-layout data under `layouts/<name>/`. There is
@@ -46,10 +46,23 @@ after editing `keys.xkb`.
 
 ## Installing
 
+With one command, without cloning the repository:
+
+```bash
+curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash
+curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash -s -- --uninstall   # remove
+```
+
+Or from a cloned repository:
+
 ```bash
 ./install.sh              # install or update every layout found under layouts/
 ./install.sh --uninstall  # remove every layout found under layouts/
 ```
+
+The script behind the link is the same `install.sh` bundled with the layout data into one file; it
+is built by `tools/build_site.sh` and published together with the
+[website](https://vovche.github.io/lisovyk/) (in Ukrainian).
 
 Running `./install.sh` again updates layouts that are already installed, so after editing `keys.xkb`
 just run it once more.

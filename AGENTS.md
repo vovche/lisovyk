@@ -25,7 +25,17 @@ the two in sync. Messages printed by `install.sh` and the tests are in Ukrainian
 tests/run.sh              # run all tests
 tests/run.sh NAME...      # run only the named tests (names without the test_ prefix)
 tools/render_layout.py    # regenerate the illustrations layouts/<name>/<level>_<name>.svg
+tools/build_site.sh DIR   # build the landing page and the standalone installer into DIR
 ```
+
+`site/` holds the static landing page published at https://vovche.github.io/lisovyk/ (Ukrainian,
+deliberately short: benefits and illustrations only, no trade-offs — those live in
+`layouts/lisovyk/README.md`). `tools/build_site.sh DIR` assembles what gets published: the page, the
+illustrations, and a self-contained `install.sh` for `curl ... | bash`, which is the repository's
+`install.sh` plus the layout data embedded as heredocs and wrapped in a function called on the last
+line (so a truncated download runs nothing). `.github/workflows/site.yml` runs the tests on every
+push and deploys the site to GitHub Pages from `main`. The published `install.sh` URL is a public
+interface: keep it and its `--uninstall` argument working.
 
 The illustrations are generated, never hand-edited: `tools/render_layout.py` compiles each layout and
 its base with `libxkbcommon` and draws one SVG per level, colouring the keys that differ from the

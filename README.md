@@ -1,6 +1,6 @@
 # lisovyk
 
-Українською | [English](README.en.md)
+Українською | [English](README.en.md) | [Сайт](https://vovche.github.io/lisovyk/)
 
 Власні варіанти клавіатурних розкладок для Linux, які встановлюються без root-прав. Репозиторій
 складається із загального інсталятора `install.sh` та даних розкладок у `layouts/<назва>/`. Зараз
@@ -46,10 +46,22 @@
 
 ## Встановлення
 
+Однією командою, без клонування репозиторію:
+
+```bash
+curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash
+curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash -s -- --uninstall   # видалити
+```
+
+Або з клонованого репозиторію:
+
 ```bash
 ./install.sh              # встановити або оновити всі розкладки з layouts/
 ./install.sh --uninstall  # видалити всі розкладки з layouts/
 ```
+
+Скрипт за посиланням — той самий `install.sh` разом із даними розкладок в одному файлі; його збирає
+`tools/build_site.sh` і публікує разом із [сайтом](https://vovche.github.io/lisovyk/).
 
 Повторний запуск `./install.sh` оновлює вже встановлені розкладки, тож після правок у `keys.xkb`
 достатньо запустити його ще раз.
