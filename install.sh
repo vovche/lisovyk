@@ -55,10 +55,20 @@ AWK_NAME_OF='
     }
 '
 
-# Друкує шлях до системного файла symbols/<base>, якщо він є.
+# Друкує шлях до системного файла symbols/<base>, якщо він є. Крім звичних
+# місць, перевіряє теки з XDG_DATA_DIRS: у деяких дистрибутивах (NixOS, Guix)
+# дані xkeyboard-config лежать не в /usr/share.
 system_symbols_file() {
-    local base_layout="$1" root
-    for root in "${XKB_CONFIG_ROOT-}" /usr/share/xkeyboard-config-2 /usr/share/X11/xkb /usr/local/share/X11/xkb; do
+    local base_layout="$1" root data_dir
+    local roots=("${XKB_CONFIG_ROOT-}" /usr/share/xkeyboard-config-2 /usr/share/X11/xkb /usr/local/share/X11/xkb)
+    local data_dirs=()
+
+    IFS=: read -r -a data_dirs <<< "${XDG_DATA_DIRS-}"
+    for data_dir in "${data_dirs[@]}"; do
+        [ -n "$data_dir" ] && roots+=("$data_dir/xkeyboard-config-2" "$data_dir/X11/xkb")
+    done
+
+    for root in "${roots[@]}"; do
         if [ -n "$root" ] && [ -f "$root/symbols/$base_layout" ]; then
             printf '%s\n' "$root/symbols/$base_layout"
             return 0
@@ -187,7 +197,7 @@ install_symbols() {
         echo
         echo "    name[Group1]= \"$description\";"
         echo
-        cat "$keys_file"
+        awk 1 "$keys_file"   # як cat, але гарантує новий рядок наприкінці
         echo "};"
         echo "// >>> END $variant <<<"
     } >> "$symbols_file"
@@ -364,7 +374,7 @@ if [ "$UNINSTALL" -eq 0 ]; then
     mkdir -p "$XKB_DIR/symbols" "$XKB_DIR/rules" || exit 1
 fi
 
-# Прибирає розкладку зі списків джерел вводу GNOME (sources і mru-sources).
+# Прибирає розкладку зі списків джерел введення GNOME (sources і mru-sources).
 # Без цього після видалення в «Параметрах» лишається запис на кшталт
 # «ua+lisovyk», за яким уже немає розкладки. Повертає 0, якщо запису не було
 # або його вдалося прибрати.
@@ -381,7 +391,7 @@ remove_gnome_source() {
         updated="$(printf '%s' "$current" | sed -e "s/('xkb', '$id'), //" -e "s/, ('xkb', '$id')//" -e "s/('xkb', '$id')//")"
         [ "$updated" = "[]" ] && updated="@a(ss) []"
         if gsettings set "$schema" "$key" "$updated" 2> /dev/null; then
-            [ "$key" = sources ] && echo "Прибрано '$id' із джерел вводу GNOME."
+            [ "$key" = sources ] && echo "Прибрано '$id' із джерел введення GNOME."
         else
             status=1
         fi
@@ -439,7 +449,8 @@ for layout_dir in "$LAYOUTS_DIR"/*/; do
     else
         echo "=== Встановлення розкладки: $DESCRIPTION ($BASE_LAYOUT+$VARIANT) ==="
         if ! system_symbols_file "$BASE_LAYOUT" > /dev/null; then
-            echo "Увага: не знайдено системну розкладку '$BASE_LAYOUT'; без неї '$VARIANT' не запрацює." >&2
+            echo "Увага: не знайдено системний файл розкладки '$BASE_LAYOUT'; без неї '$VARIANT' не запрацює." >&2
+            echo "Якщо дані xkeyboard-config лежать у нестандартному місці, задайте XKB_CONFIG_ROOT." >&2
         fi
         if install_symbols "$BASE_LAYOUT" "$VARIANT" "$DESCRIPTION" "$keys_file" "$BASE_VARIANT" \
             && install_registry "$BASE_LAYOUT" "$VARIANT" "$DESCRIPTION"; then
@@ -466,8 +477,8 @@ echo "--------------------------------------------------------"
 if [ "$UNINSTALL" -eq 1 ]; then
     echo "Видалення завершено."
     if [ ${#STILL_ACTIVE[@]} -gt 0 ]; then
-        echo "Увага: не вдалося прибрати ці розкладки з джерел вводу GNOME: ${STILL_ACTIVE[*]}"
-        echo "Приберіть їх у «Параметри → Клавіатура → Джерела вводу»."
+        echo "Увага: не вдалося прибрати ці розкладки з джерел введення GNOME: ${STILL_ACTIVE[*]}"
+        echo "Приберіть їх у «Параметри → Клавіатура → Джерела введення»."
     fi
     echo "Зміни набудуть чинності після виходу із сесії та повторного входу."
 else
@@ -490,10 +501,10 @@ else
             fi
         done
         echo "1. Вийдіть із сесії (Log Out) та увійдіть знову."
-        echo "2. GNOME: додайте розкладку в «Параметри → Клавіатура → Джерела вводу»"
-        echo "   або виконайте команду (вона ЗАМІНЮЄ весь список джерел вводу):"
+        echo "2. GNOME: додайте розкладку в «Параметри → Клавіатура → Джерела введення»"
+        echo "   або виконайте команду (вона ЗАМІНЮЄ весь список джерел введення):"
         echo "   gsettings set org.gnome.desktop.input-sources sources \"[('xkb', 'us'), $joined]\""
-        echo "   Інші середовища (KDE, Hyprland, niri, Sway): див. README.md."
+        echo "   Інші середовища (Hyprland, niri, Sway) і докладні кроки: https://vovche.github.io/lisovyk/"
     fi
 fi
 echo "--------------------------------------------------------"

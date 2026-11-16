@@ -433,6 +433,32 @@ test_illustrations() {
     done
 }
 
+# keys.xkb, що закінчується коментарем без нового рядка, не має ламати блок;
+# системні дані знаходяться і в теках із XDG_DATA_DIRS.
+test_edge_inputs() {
+    local repo="$WORK/edge/repo" home out
+    home="$(new_home edge)"
+    mkdir -p "$repo/layouts/nonl"
+    cp "$REPO_DIR/install.sh" "$repo/"
+    printf 'BASE_LAYOUT="ua"\nBASE_VARIANT="unicode"\nVARIANT="nonl"\nDESCRIPTION="No newline"\n' > "$repo/layouts/nonl/layout.conf"
+    printf '    key <AE01> { [ 1, exclam, U2020, U2021 ] };\n    // коментар без нового рядка' > "$repo/layouts/nonl/keys.xkb"
+
+    check "встановлення завершується успішно" env HOME="$home" bash "$repo/install.sh"
+    check "розкладка з keys.xkb без кінцевого нового рядка компілюється" xkb "$home" compile ua nonl
+
+    rm -rf "$repo/layouts/nonl"
+    mkdir -p "$repo/layouts/zz" "$WORK/edge/data/X11/xkb/symbols"
+    printf 'BASE_LAYOUT="zz"\nVARIANT="zzv"\nDESCRIPTION="Elsewhere"\n' > "$repo/layouts/zz/layout.conf"
+    printf '    key <AE01> { [ 1 ] };\n' > "$repo/layouts/zz/keys.xkb"
+    printf 'default partial alphanumeric_keys\nxkb_symbols "basic" {\n    key <AE01> { [ 1 ] };\n};\n' \
+        > "$WORK/edge/data/X11/xkb/symbols/zz"
+    home="$(new_home edge-data)"
+    out="$(HOME="$home" XDG_DATA_DIRS="/nonexistent:$WORK/edge/data" bash "$repo/install.sh" 2>&1)"
+    check_not "системний файл знайдено через XDG_DATA_DIRS" sh -c "printf '%s' \"\$1\" | grep -q 'не знайдено системний файл'" _ "$out"
+    out="$(HOME="$home" XDG_DATA_DIRS="/nonexistent" bash "$repo/install.sh" 2>&1)"
+    check "без системного файла є попередження" sh -c "printf '%s' \"\$1\" | grep -q 'не знайдено системний файл'" _ "$out"
+}
+
 # Видалення має прибрати розкладку і зі списків джерел вводу GNOME.
 test_gnome_sources() {
     local home schema="org.gnome.desktop.input-sources"
@@ -495,7 +521,7 @@ test_standalone() {
 
 ALL_TESTS=(
     syntax layout_data arguments fresh_install base_layout_untouched idempotent uninstall_clean uninstall_nothing
-    update preserves_foreign legacy_migration xdg_config_home multiple_layouts gnome_sources illustrations standalone
+    update preserves_foreign legacy_migration xdg_config_home multiple_layouts edge_inputs gnome_sources illustrations standalone
 )
 
 if [ $# -gt 0 ]; then
