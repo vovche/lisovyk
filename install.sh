@@ -106,8 +106,10 @@ install_symbols() {
 
     # Файл містить лише наші варіанти: решту секцій (зокрема ту, яку ми
     # включаємо) libxkbcommon бере із системного файла з такою самою назвою.
+    local separator=0
+    [ -s "$symbols_file" ] && separator=1
     {
-        [ -s "$symbols_file" ] && echo
+        [ "$separator" -eq 1 ] && echo
         echo "// >>> BEGIN $variant (керується install.sh, не редагуйте вручну) <<<"
         echo "partial alphanumeric_keys"
         echo "xkb_symbols \"$variant\" {"
