@@ -67,9 +67,82 @@ system_symbols_file() {
     return 1
 }
 
-# Прибирає з файла блок варіанта (між маркерами BEGIN/END) разом із порожнім
-# рядком перед ним. Якщо після цього у файлі лишилась тільки копія системного
-# файла (так робили старі версії скрипта) або нічого — видаляє файл.
+# Назва секції, яку система вважає типовою для розкладки <base>: позначена
+# словом default, а якщо такої немає — перша у файлі.
+system_default_section() {
+    local base_layout="$1" sys_file
+
+    sys_file="$(system_symbols_file "$base_layout")" || return 1
+    awk '
+        { line = $0; sub(/\/\/.*/, "", line) }
+        line ~ /(^|[ \t])default([ \t]|$)/ { flagged = 1 }
+        match(line, /xkb_symbols[ \t]+"[^"]+"/) {
+            name = substr(line, RSTART, RLENGTH)
+            sub(/^xkb_symbols[ \t]+"/, "", name)
+            sub(/"$/, "", name)
+            if (first == "") first = name
+            if (flagged) { print name; found = 1; exit }
+            flagged = 0
+        }
+        END { if (!found && first != "") print first }
+    ' "$sys_file" | grep .
+}
+
+# Прибирає з файла блок між маркерами "// >>> BEGIN <назва> ..." та
+# "// >>> END <назва> <<<" разом із порожнім рядком перед ним.
+strip_block() {
+    local file="$1" name="$2"
+
+    X_BEGIN="// >>> BEGIN $name " X_END="// >>> END $name <<<" awk '
+        function flush() { if (have) { print held; have = 0 } }
+        index($0, ENVIRON["X_BEGIN"]) == 1 { have = 0; skip = 1; next }
+        skip { if ($0 == ENVIRON["X_END"]) skip = 0; next }
+        { flush(); if ($0 == "") { held = $0; have = 1 } else print }
+        END { flush() }
+    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+}
+
+# Наш файл symbols/<base> має ту саму назву, що й системний, і libxkbcommon
+# знаходить його першим. Розкладку без варіанта ("ua") він бере з типової
+# секції цього файла, а коли типову не позначено — з першої, тобто з нашого
+# варіанта: стандартна українська розкладка тихо ставала б Lisovyk. Тому
+# поруч із нашими варіантами тримаємо позначену default секцію, яка лише
+# включає типову секцію системного файла.
+#
+# Викликається після кожної зміни файла: додає цей блок, коли у файлі є наші
+# варіанти й немає власної default-секції, прибирає його, коли наших варіантів
+# не лишилось, і видаляє файл, якщо він спорожнів.
+sync_default_block() {
+    local base_layout="$1" fallback_variant="$2"
+    local symbols_file="$XKB_DIR/symbols/$base_layout" target
+
+    [ -f "$symbols_file" ] || return 0
+    strip_block "$symbols_file" "@default"
+
+    if ! grep -q '[^[:space:]]' "$symbols_file"; then
+        rm -f "$symbols_file"
+        return 0
+    fi
+    grep -q '^// >>> BEGIN ' "$symbols_file" || return 0
+    if sed 's|//.*||' "$symbols_file" | grep -Eq '(^|[[:space:]])default([[:space:]]|$)'; then
+        return 0
+    fi
+
+    target="$(system_default_section "$base_layout")" || target="$fallback_variant"
+    {
+        echo
+        echo "// >>> BEGIN @default (керується install.sh, не редагуйте вручну) <<<"
+        echo "// Щоб розкладка \"$base_layout\" без варіанта лишалась системною, а не першою секцією цього файла."
+        echo "default partial alphanumeric_keys"
+        echo "xkb_symbols \"system-default\" {"
+        echo "    include \"$base_layout($target)\""
+        echo "};"
+        echo "// >>> END @default <<<"
+    } >> "$symbols_file"
+}
+
+# Прибирає з файла блок варіанта. Якщо після цього у файлі лишилась тільки
+# копія системного файла (так робили старі версії скрипта) — видаляє файл.
 remove_symbols_block() {
     local base_layout="$1" variant="$2"
     local symbols_file="$XKB_DIR/symbols/$base_layout" sys_file
@@ -77,17 +150,9 @@ remove_symbols_block() {
     [ -f "$symbols_file" ] || return 1
     grep -q "^// >>> BEGIN $variant " "$symbols_file" || return 1
 
-    X_BEGIN="// >>> BEGIN $variant " X_END="// >>> END $variant <<<" awk '
-        function flush() { if (have) { print held; have = 0 } }
-        index($0, ENVIRON["X_BEGIN"]) == 1 { have = 0; skip = 1; next }
-        skip { if ($0 == ENVIRON["X_END"]) skip = 0; next }
-        { flush(); if ($0 == "") { held = $0; have = 1 } else print }
-        END { flush() }
-    ' "$symbols_file" > "$symbols_file.tmp" && mv "$symbols_file.tmp" "$symbols_file"
+    strip_block "$symbols_file" "$variant"
 
-    if ! grep -q '[^[:space:]]' "$symbols_file"; then
-        rm -f "$symbols_file"
-    elif sys_file="$(system_symbols_file "$base_layout")" && cmp -s "$symbols_file" "$sys_file"; then
+    if sys_file="$(system_symbols_file "$base_layout")" && cmp -s "$symbols_file" "$sys_file"; then
         echo "Прибираємо зайву копію системного файла $symbols_file..."
         rm -f "$symbols_file"
     fi
@@ -97,6 +162,10 @@ remove_symbols_block() {
 install_symbols() {
     local base_layout="$1" variant="$2" description="$3" keys_file="$4" base_variant="$5"
     local symbols_file="$XKB_DIR/symbols/$base_layout"
+
+    # Блок @default завжди стоїть останнім: знімаємо його перед змінами,
+    # sync_default_block наприкінці поверне.
+    [ -f "$symbols_file" ] && strip_block "$symbols_file" "@default"
 
     if remove_symbols_block "$base_layout" "$variant"; then
         echo "Оновлюємо блок '$variant' у $symbols_file..."
@@ -122,10 +191,12 @@ install_symbols() {
         echo "};"
         echo "// >>> END $variant <<<"
     } >> "$symbols_file"
+
+    sync_default_block "$base_layout" "$base_variant"
 }
 
 uninstall_symbols() {
-    local base_layout="$1" variant="$2"
+    local base_layout="$1" variant="$2" base_variant="$3"
     local symbols_file="$XKB_DIR/symbols/$base_layout"
 
     if remove_symbols_block "$base_layout" "$variant"; then
@@ -133,6 +204,7 @@ uninstall_symbols() {
     else
         echo "Блок '$variant' у $symbols_file не знайдено, пропускаємо."
     fi
+    sync_default_block "$base_layout" "$base_variant"
 }
 
 # Старі версії скрипта писали власне правило в rules/evdev. Воно не потрібне:
@@ -360,7 +432,7 @@ for layout_dir in "$LAYOUTS_DIR"/*/; do
 
     if [ "$UNINSTALL" -eq 1 ]; then
         echo "=== Видалення розкладки: $DESCRIPTION ($BASE_LAYOUT+$VARIANT) ==="
-        uninstall_symbols "$BASE_LAYOUT" "$VARIANT"
+        uninstall_symbols "$BASE_LAYOUT" "$VARIANT" "$BASE_VARIANT"
         cleanup_legacy_rules "$BASE_LAYOUT" "$VARIANT"
         uninstall_registry "$BASE_LAYOUT" "$VARIANT"
         remove_gnome_source "$BASE_LAYOUT+$VARIANT" || STILL_ACTIVE+=("$BASE_LAYOUT+$VARIANT")

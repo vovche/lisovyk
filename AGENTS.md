@@ -89,8 +89,15 @@ user-level location `libxkbcommon` consults before the system-wide tree:
    "$VARIANT"` block generated from `keys.xkb` and wrapped in `// >>> BEGIN $VARIANT ... <<<` /
    `// >>> END $VARIANT <<<` marker comments. The system file is deliberately not copied: when a
    section is missing from the user file, `libxkbcommon` keeps looking in the system file of the same
-   name, so `include "ua(unicode)"` and the stock `ua` layout still resolve to the system copy and
-   pick up its updates.
+   name, so `include "ua(unicode)"` and the other stock variants still resolve to the system copy
+   and pick up its updates. The layout without a variant (`ua`) is different: it is taken from the
+   default section of the first file found, and without an explicit `default` that is the first
+   section — ours. So the file also carries a `// >>> BEGIN @default ... <<<` block: a `default`
+   section named `system-default` that only includes the system file's default section (found by
+   parsing the system file). `sync_default_block` adds it whenever the file has our variants and no
+   `default` section of its own, and removes it when our last variant goes. Without it the stock
+   Ukrainian layout silently becomes Lisovyk; the `base_layout_untouched` test guards this by
+   comparing compiled keymaps with and without the install.
 2. **`rules/evdev.xml`** — a shared XML registry so input source pickers (GNOME's, via
    `libxkbregistry`) can discover each variant. An `awk` script finds the `<layout>` block whose own
    `<name>` matches `$BASE_LAYOUT` and inserts the `<variant>` into its `<variantList>`, or appends a

@@ -173,6 +173,39 @@ test_fresh_install() {
     check "системна розкладка ua лишається доступною" xkb "$home" compile ua ""
 }
 
+# Встановлення не має змінювати жодну системну розкладку: ні типову "ua"
+# (вона береться з першої секції файла symbols/ua, а наш файл має ту саму
+# назву), ні її інші варіанти, ні ua як другу розкладку в списку.
+test_base_layout_untouched() {
+    local home clean spec layout variant
+    home="$(new_home base-installed)"
+    clean="$(new_home base-clean)"
+    install "$home" > /dev/null 2>&1
+
+    for spec in "ua:" "ua:legacy" "ua:homophonic" "us,ua:," "us:"; do
+        layout="${spec%%:*}"
+        variant="${spec#*:}"
+        if ! xkb "$clean" dump "$layout" "$variant" > "$WORK/base-clean/dump" 2>&1; then
+            echo "    ПРОПУЩЕНО: у системі немає розкладки $layout($variant)"
+            continue
+        fi
+        xkb "$home" dump "$layout" "$variant" > "$WORK/base-installed/dump" 2>&1
+        check "розкладка $layout($variant) така сама, як без встановлення" \
+            cmp "$WORK/base-clean/dump" "$WORK/base-installed/dump"
+    done
+
+    # Те саме, коли у файлі користувача вже є його власний варіант без позначки default.
+    home="$(new_home base-foreign)"
+    mkdir -p "$home/.config/xkb/symbols"
+    printf 'partial alphanumeric_keys\nxkb_symbols "mine" {\n    include "ua(unicode)"\n    key <AE01> { [ 1, exclam, U2020, U2021 ] };\n};\n' \
+        > "$home/.config/xkb/symbols/ua"
+    install "$home" > /dev/null 2>&1
+    xkb "$clean" dump ua "" > "$WORK/base-clean/dump" 2>&1
+    xkb "$home" dump ua "" > "$WORK/base-foreign/dump" 2>&1
+    check "типова ua така сама й поруч із варіантом користувача" \
+        cmp "$WORK/base-clean/dump" "$WORK/base-foreign/dump"
+}
+
 test_idempotent() {
     local home
     home="$(new_home idempotent)"
@@ -461,7 +494,7 @@ test_standalone() {
 # ---------------------------------------------------------------------------
 
 ALL_TESTS=(
-    syntax layout_data arguments fresh_install idempotent uninstall_clean uninstall_nothing
+    syntax layout_data arguments fresh_install base_layout_untouched idempotent uninstall_clean uninstall_nothing
     update preserves_foreign legacy_migration xdg_config_home multiple_layouts gnome_sources illustrations standalone
 )
 

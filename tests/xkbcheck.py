@@ -6,6 +6,7 @@ $XDG_CONFIG_HOME/xkb або ~/.config/xkb, як і вони.
   xkbcheck.py compile  LAYOUT VARIANT              розкладка компілюється
   xkbcheck.py nocompile LAYOUT VARIANT             розкладка НЕ компілюється
   xkbcheck.py keys     LAYOUT VARIANT KEYS.XKB     клавіші дають символи з keys.xkb
+  xkbcheck.py dump     LAYOUT VARIANT              надрукувати скомпільовану розкладку
   xkbcheck.py registry BASE VARIANT DESCRIPTION    варіант є в реєстрі з цим описом
   xkbcheck.py noregistry BASE VARIANT              варіанта в реєстрі немає
 
@@ -48,6 +49,8 @@ def xkb():
         c_void_p, c_uint32, c_uint32, c_uint32, ctypes.POINTER(ctypes.POINTER(c_uint32))]
     lib.xkb_keymap_num_layouts.restype = c_uint32
     lib.xkb_keymap_num_layouts.argtypes = [c_void_p]
+    lib.xkb_keymap_get_as_string.restype = c_char_p
+    lib.xkb_keymap_get_as_string.argtypes = [c_void_p, c_int]
     lib.xkb_keysym_from_name.restype = c_uint32
     lib.xkb_keysym_from_name.argtypes = [c_char_p, c_int]
     return lib
@@ -74,6 +77,16 @@ def cmd_compile(layout, variant, expect=True):
     if ok != expect:
         print("розкладка %s(%s) %s" % (layout, variant, "компілюється" if ok else "не компілюється"))
         return 1
+    return 0
+
+
+def cmd_dump(layout, variant):
+    lib = xkb()
+    keymap = compile_keymap(lib, layout, variant)
+    if not keymap:
+        print("розкладка %s(%s) не компілюється" % (layout, variant))
+        return 1
+    sys.stdout.write(lib.xkb_keymap_get_as_string(keymap, 1).decode())
     return 0
 
 
@@ -158,6 +171,7 @@ def main(argv):
         "compile": (cmd_compile, 2),
         "nocompile": (lambda l, v: cmd_compile(l, v, expect=False), 2),
         "keys": (cmd_keys, 3),
+        "dump": (cmd_dump, 2),
         "registry": (cmd_registry, 3),
         "noregistry": (cmd_noregistry, 2),
     }
