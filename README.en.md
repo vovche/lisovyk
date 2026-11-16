@@ -83,7 +83,9 @@ layouts into it):
 gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'ua+lisovyk')]"
 ```
 
-Uninstalling also removes the layout from GNOME's input sources.
+Uninstalling also removes the layout from GNOME's input sources. It never edits the configuration of
+other environments: if the layout is still mentioned in your KDE, Hyprland, niri or Sway config, the
+script lists those files and you remove it from them by hand.
 
 Other environments enable the layout through their own configuration:
 

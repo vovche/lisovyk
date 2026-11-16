@@ -399,8 +399,27 @@ remove_gnome_source() {
     return "$status"
 }
 
+# Поза GNOME розкладку вмикають у власних файлах налаштувань середовища
+# (KDE, Hyprland, niri, Sway). Редагувати їх автоматично ризиковано, тому після
+# видалення лише шукаємо в них згадку варіанта й додаємо такі файли до
+# LEFTOVER_CONFIGS, щоб попередити користувача.
+find_leftover_configs() {
+    local variant="$1" config_dir="${XDG_CONFIG_HOME:-$HOME/.config}" file known
+
+    for file in "$config_dir/kxkbrc" "$config_dir"/hypr/*.conf "$config_dir/niri/config.kdl" \
+        "$config_dir/sway/config" "$config_dir"/sway/config.d/*; do
+        [ -f "$file" ] || continue
+        grep -qw -- "$variant" "$file" || continue
+        for known in "${LEFTOVER_CONFIGS[@]}"; do
+            [ "$known" = "$file" ] && continue 2
+        done
+        LEFTOVER_CONFIGS+=("$file")
+    done
+}
+
 INSTALLED_SOURCES=()
 STILL_ACTIVE=()
+LEFTOVER_CONFIGS=()
 FOUND_ANY=0
 FAILED=0
 
@@ -446,6 +465,7 @@ for layout_dir in "$LAYOUTS_DIR"/*/; do
         cleanup_legacy_rules "$BASE_LAYOUT" "$VARIANT"
         uninstall_registry "$BASE_LAYOUT" "$VARIANT"
         remove_gnome_source "$BASE_LAYOUT+$VARIANT" || STILL_ACTIVE+=("$BASE_LAYOUT+$VARIANT")
+        find_leftover_configs "$VARIANT"
     else
         echo "=== Встановлення розкладки: $DESCRIPTION ($BASE_LAYOUT+$VARIANT) ==="
         if ! system_symbols_file "$BASE_LAYOUT" > /dev/null; then
@@ -479,6 +499,13 @@ if [ "$UNINSTALL" -eq 1 ]; then
     if [ ${#STILL_ACTIVE[@]} -gt 0 ]; then
         echo "Увага: не вдалося прибрати ці розкладки з джерел введення GNOME: ${STILL_ACTIVE[*]}"
         echo "Приберіть їх у «Параметри → Клавіатура → Джерела введення»."
+    fi
+    if [ ${#LEFTOVER_CONFIGS[@]} -gt 0 ]; then
+        echo "Увага: видалена розкладка досі згадується у ваших файлах налаштувань."
+        echo "Приберіть її звідти вручну, інакше середовище не зможе зібрати розкладку:"
+        for file in "${LEFTOVER_CONFIGS[@]}"; do
+            echo "   $file"
+        done
     fi
     echo "Зміни набудуть чинності після виходу із сесії та повторного входу."
 else

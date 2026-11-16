@@ -489,6 +489,39 @@ test_gnome_sources() {
     check "чужі джерела вводу не змінено" test "$(gsettings get "$schema" sources)" = "[('xkb', 'us'), ('xkb', 'ua')]"
 }
 
+# Поза GNOME видалення має попередити про файли налаштувань, де лишилась розкладка.
+test_leftover_configs() {
+    local home cfg out
+    home="$(new_home leftover)"
+    cfg="$home/.config"
+    install "$home" > /dev/null 2>&1
+
+    out="$(install "$home" --uninstall 2>&1)"
+    check_not "без чужих налаштувань попередження немає" \
+        sh -c "printf '%s' \"\$1\" | grep -q 'згадується у ваших файлах'" _ "$out"
+
+    install "$home" > /dev/null 2>&1
+    mkdir -p "$cfg/hypr" "$cfg/niri" "$cfg/sway/config.d"
+    printf '[Layout]\nLayoutList=us,ua\nVariantList=,lisovyk\n' > "$cfg/kxkbrc"
+    printf 'input {\n    kb_layout = us,ua\n    kb_variant = ,lisovyk\n}\n' > "$cfg/hypr/hyprland.conf"
+    printf 'input {\n    kb_layout = us,ua\n}\n' > "$cfg/hypr/other.conf"
+    printf 'input { keyboard { xkb { layout "us,ua"; variant ",lisovyk" } } }\n' > "$cfg/niri/config.kdl"
+    printf 'input type:keyboard {\n    xkb_variant ,lisovyk2\n}\n' > "$cfg/sway/config"
+    printf 'input type:keyboard xkb_variant ,lisovyk\n' > "$cfg/sway/config.d/keyboard"
+    cp -r "$cfg" "$WORK/leftover/before"
+    rm -rf "$WORK/leftover/before/xkb"
+
+    out="$(install "$home" --uninstall 2>&1)"
+    for file in kxkbrc hypr/hyprland.conf niri/config.kdl sway/config.d/keyboard; do
+        check "попередження називає $file" sh -c "printf '%s' \"\$1\" | grep -qxF \"   \$2\"" _ "$out" "$cfg/$file"
+    done
+    for file in hypr/other.conf sway/config; do
+        check_not "файл без нашої розкладки не названо: $file" \
+            sh -c "printf '%s' \"\$1\" | grep -qxF \"   \$2\"" _ "$out" "$cfg/$file"
+    done
+    check "файли налаштувань не змінено" same_tree "$WORK/leftover/before" "$cfg"
+}
+
 # Самодостатній інсталятор із сайту: запуск через канал, як із curl.
 test_standalone() {
     local out="$WORK/standalone/site" home size
@@ -521,7 +554,7 @@ test_standalone() {
 
 ALL_TESTS=(
     syntax layout_data arguments fresh_install base_layout_untouched idempotent uninstall_clean uninstall_nothing
-    update preserves_foreign legacy_migration xdg_config_home multiple_layouts edge_inputs gnome_sources illustrations standalone
+    update preserves_foreign legacy_migration xdg_config_home multiple_layouts edge_inputs gnome_sources leftover_configs illustrations standalone
 )
 
 if [ $# -gt 0 ]; then

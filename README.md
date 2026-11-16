@@ -82,7 +82,9 @@ curl -fsSL https://vovche.github.io/lisovyk/install.sh | bash -s -- --uninstall 
 gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'ua+lisovyk')]"
 ```
 
-Видалення прибирає розкладку і з джерел введення GNOME.
+Видалення прибирає розкладку і з джерел введення GNOME. Файли налаштувань інших середовищ скрипт не
+змінює: якщо розкладка лишилась у конфігурації KDE, Hyprland, niri чи Sway, він назве ці файли, а
+прибрати її звідти треба вручну.
 
 В інших середовищах розкладку вмикають їхніми власними налаштуваннями:
 

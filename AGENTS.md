@@ -113,7 +113,9 @@ entries, a user's `rules/evdev`) is left byte-for-byte intact.
 
 `--uninstall` reverses both writes, removes the layout from GNOME's input source lists (`sources` and
 `mru-sources` in `org.gnome.desktop.input-sources`, via `gsettings` when present — otherwise Settings
-keeps showing a dangling `ua+lisovyk` entry), then deletes what it left empty: a `symbols/` file with nothing
+keeps showing a dangling `ua+lisovyk` entry), warns about
+KDE, Hyprland, niri and Sway config files that still mention the variant (it only lists them; it
+never edits them), then deletes what it left empty: a `symbols/` file with nothing
 but whitespace, a `<layout>` entry with no variants and no description, a registry file equal to the
 bare skeleton, and the `symbols/`, `rules/` and `xkb/` directories if empty.
 
